@@ -1,0 +1,317 @@
+<!--"StAuth10244: I  Mohamed Gufran Sarfaraz Mansuri, certify that this material is my original work. No other person's work has been used without due acknowledgement. I have not made my work available to anyone else."-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script> -->
+    <script src="./maps.js"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #container {
+        margin-left: 50px;
+      }
+      .button {
+        margin-right: 60px;
+      }
+      #location {
+        margin-top: 20px;
+        margin-left: 50px;
+        padding: 10px;
+        background-color: aqua;
+        font-size: 15px;
+        border-radius: 20px;
+        border: black 2px solid;
+      }
+      #container2 {
+        margin-right: 100px;
+      }
+      #addresses {
+        margin-left: 50px;
+        margin-top: 30px;
+      }
+      .address {
+        margin-left: 50px;
+      }
+      .parent {
+        border: 1px solid black;
+        padding: 2rem 2rem;
+        text-align: center;
+        height: 60%;
+      }
+      .child {
+        display: inline-block;
+        border: 1px solid red;
+        height: 95%;
+        width: 49%;
+        margin-bottom: -30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="parent">
+      <div id="map" class="child"></div>
+      <div id="pano" class="child"></div>
+      <br />
+    </div>
+
+    <div id="container">
+      <button id="cascade" class="button">Only Cascade</button>
+      <button id="waterfalls" class="button">Only waterfalls</button>
+      <button id="showAll" class="button">Show all</button>
+      <button id="location">GET YOUR LOCATION</button>
+    </div>
+    <br />
+
+    <div id="container2">
+      <strong style="font-size: 22px" class="address">Address:</strong>
+      <input
+        type="text"
+        class="address"
+        id="add"
+        size="66"
+        style="font-size: 22px"
+      />
+    </div>
+    <br />
+
+    <button id="addresses" style="font-size: 15px">Get Address on Map</button>
+
+    <!-- using the api key to access the google maps. -->
+    <script type="module">
+      import { url } from "./url.js";
+    </script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=initMap&v=weekly"
+      async
+    ></script>
+
+    <!-- my main script starts here -->
+    <script src="./City_Waterfalls.js"></script>
+    <script>
+      let map; //to store the map element
+      var marker = []; // to store all the markers
+      var currentLat; // to store the current latitude
+      var currentLng; // to store the current loingitute
+
+      // this function shows the map and the street view and shows the markers on the map
+      function initMap() {
+        const hamilton = { lat: 43.2557, lng: -79.8711 };
+
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: hamilton,
+          zoom: 12,
+        });
+
+        const panorama = new google.maps.StreetViewPanorama(
+          document.getElementById("pano"),
+          {
+            position: hamilton,
+            pov: {
+              heading: 34,
+              pitch: 10,
+            },
+          }
+        );
+
+        map.setStreetView(panorama);
+
+        infowindow = new google.maps.InfoWindow();
+        geocoder = new google.maps.Geocoder();
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer();
+
+        marker_clicked = function () {
+          infowindow.close(); // Close previously opened infowindow
+          infowindow.setContent(
+            "<p>Name: " +
+              this.NAME +
+              "</p><br>" +
+              " <p>Height of falls: " +
+              this.HEIGHT_IN_M +
+              "</p><br>" +
+              " <p>Width of falls: " +
+              this.WIDTH_IN_M +
+              "</p><br>" +
+              " <p>Access from: " +
+              this.ACCESS_FROM +
+              "</p><br>" +
+              '<a href="#" onclick="return direction(' +
+              this.LATITUDE +
+              "," +
+              this.LONGITUDE +
+              ')"> Directions</a>'
+          );
+          infowindow.open(map, this);
+        };
+
+        for (i = 0; i < waterfalls.length; i++) {
+          var new_icon =
+            "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
+
+          if (waterfalls[i].properties.TYPE == "Waterfall") {
+            new_icon =
+              "http://maps.google.com/mapfiles/ms/icons/waterfalls.png";
+          }
+
+          new_marker = new google.maps.Marker({
+            position: {
+              lat: waterfalls[i].geometry.coordinates[1],
+              lng: waterfalls[i].geometry.coordinates[0],
+            },
+            title: "waterfalls",
+            icon: new_icon,
+          });
+
+          new_marker.setMap(map);
+          directionsRenderer.setMap(map);
+
+          new_marker.NAME = waterfalls[i].properties.NAME;
+          new_marker.WIDTH_IN_M = waterfalls[i].properties.WIDTH_IN_M;
+          new_marker.HEIGHT_IN_M = waterfalls[i].properties.HEIGHT_IN_M;
+          new_marker.ACCESS_FROM = waterfalls[i].properties.ACCESS_FROM;
+          new_marker.LATITUDE = waterfalls[i].geometry.coordinates[0];
+          new_marker.LONGITUDE = waterfalls[i].geometry.coordinates[1];
+
+          new_marker.addListener("click", marker_clicked);
+
+          marker.push(new_marker);
+        }
+      }
+
+      // this function shows the markers of cascade when the cascade button is clicked
+      function filterCascade() {
+        for (i = 0; i < waterfalls.length; i++) {
+          if (waterfalls[i].properties.TYPE == "Cascade") marker[i].setMap(map);
+          else marker[i].setMap(null);
+        }
+      }
+
+      // this function shows the markers of waterfall when the waterfall button is clicked
+      function filterWaterfalls() {
+        for (i = 0; i < waterfalls.length; i++) {
+          if (waterfalls[i].properties.TYPE == "Waterfall")
+            marker[i].setMap(map);
+          else marker[i].setMap(null);
+        }
+      }
+
+      //setting all the event handlers
+      document.getElementById("cascade").onclick = filterCascade;
+      document.getElementById("waterfalls").onclick = filterWaterfalls;
+      document.getElementById("showAll").onclick = showAll;
+      document.getElementById("location").onclick = getLocation;
+      document.getElementById("addresses").onclick = address;
+
+      // this function shows all the markers when the show all button is clicked
+      function showAll() {
+        for (i = 0; i < waterfalls.length; i++) marker[i].setMap(map);
+      }
+
+      //this function puts a marker at the current location
+      function showPosition(position) {
+        infowindow = new google.maps.InfoWindow();
+
+        marker_clicked = function () {
+          infowindow.close(); // Close previously opened infowindow
+          infowindow.setContent("YOUR LOCATION");
+          infowindow.open(map, this);
+        };
+        var icon = "http://maps.google.com/mapfiles/ms/icons/rangerstation.png";
+
+        currentLat = position.coords.latitude;
+        currentLng = position.coords.longitude;
+
+        new_marker = new google.maps.Marker({
+          position: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+          title: "YOUR LOCATION",
+          icon: icon,
+        });
+
+        new_marker.setMap(map);
+
+        new_marker.addListener("click", marker_clicked);
+      }
+
+      function showError(error) {
+        // the error function is given an error object containing a code property
+        // that we can look at to determine which error occurred
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            x.innerHTML = "User denied the request for Geolocation.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            x.innerHTML = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            x.innerHTML = "The request to get user location timed out.";
+            break;
+          case error.UNKNOWN_ERROR:
+            x.innerHTML = "An unknown error occurred.";
+            break;
+        }
+      }
+
+      //checks if the browser support the navigator function
+      function getLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function address() {
+        var address = document.getElementById("add").value;
+
+        // perform geocoding for the address entered into the input textbox, a
+        // callback function is given the latitude and longitude as an an
+        // argument as part of a results object..
+        geocoder.geocode({ address: address }, function (results, status) {
+          if (status == "OK") {
+            var icon =
+              "http://maps.google.com/mapfiles/ms/icons/rangerstation.png";
+            var marker = new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location,
+              icon: icon,
+            });
+          } else {
+            console.log(status);
+            alert(
+              "Geocode was not successful for the following reason: " + status
+            );
+          }
+        });
+      }
+
+      // this function gives you the direction from your location to any markers you click on
+      function direction(lat, lng) {
+        console.log(lat, lng);
+        console.log(currentLat, currentLng);
+        request = {
+          origin: new google.maps.LatLng(currentLat, currentLng),
+          destination: new google.maps.LatLng(lng, lat),
+          travelMode: "DRIVING",
+        };
+
+        // use the directions service and directions renderer to render the
+        // directions on the map
+        directionsService.route(request, function (result, status) {
+          if (status == "OK") {
+            directionsRenderer.setDirections(result);
+            console.log(result);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

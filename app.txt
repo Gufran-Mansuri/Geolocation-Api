@@ -1,0 +1,12 @@
+application purpose - I targeted the user who loves nature and waterfalls as you know hamilton is know as the city of waterfalls. I showed
+all the waterfalls and cascades in hamilton 
+
+feature1 - there are 3 buttons one only display the cascade second one display the waterfalls and the third one displays all of them
+feature2 - you can get your current location when you use click the button 'get your location'
+feature3 - you can place marker at any place via typing it's address
+feature4 - when ever you click on any marker which shows up as soon as the page is rendered you can get few information about that place
+	   like name of the place, height of the falls, width of the falls, which place you can access the falls from and 
+	   direction to the place
+feature5 - you can get direction to any of the default markers from your current location and the link to that is in the info window
+	   (note: to get the direction user first have to provide it's current location first by clicking the 'get your location' button
+feature6 - i added the google street view feature side by the maps so it is convenient for the user to check on the spots  
